@@ -44,6 +44,22 @@ export class OpenApiTransformer {
     generateSchemaRef: (ref: string) => string,
     defaultValue?: T
   ): SchemaObject | ReferenceObject {
+    if (isZodType(zodSchema, 'ZodLazy')) {
+      const innerSchema = Metadata.unwrapChained(zodSchema.schema);
+      const innerRefId = Metadata.getRefId(innerSchema);
+      if (innerRefId) {
+        return { $ref: generateSchemaRef(innerRefId) };
+      }
+
+      return this.transform(
+        innerSchema,
+        isNullable,
+        mapItem,
+        generateSchemaRef,
+        defaultValue
+      );
+    }
+
     if (isZodType(zodSchema, 'ZodNull')) {
       return this.versionSpecifics.nullType;
     }
